@@ -5,7 +5,10 @@ import com.alura.literalura.model.DatosLibros;
 import com.alura.literalura.model.Libros;
 import com.alura.literalura.service.ConsumoAPI;
 import com.alura.literalura.service.ConvierteDatos;
+import com.alura.literalura.service.LibrosResponse;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -21,7 +24,6 @@ public class Principal {
     private ConsumoAPI consumoApi = new ConsumoAPI();
     private final String URL_BASE = "https://gutendex.com/";
     private ConvierteDatos conversor = new ConvierteDatos();
-    private List<DatosLibros> datosLibros = new ArrayList<>();
     public void muestraElMenu() {
         var opcion = -1;
         while (opcion != 0) {
@@ -70,7 +72,31 @@ public class Principal {
     private void buscarLibroPorTitulo(){
         System.out.println("Ingrese el titulo del libro: ");
         var titulo = sc.nextLine();
-        Libros libro = new Libros(titulo);
+        try {
+            // Construir la URL para buscar el libro por título
+            var urlBusqueda = URL_BASE + "books/?search=" + URLEncoder.encode(titulo, StandardCharsets.UTF_8) + "&languages=en";
+
+            // Obtener datos JSON desde la API
+            String jsonRespuesta = consumoApi.obtenerDatos(urlBusqueda);
+
+            // Convertir JSON en una lista de objetos (debes mapear correctamente los resultados)
+            LibrosResponse response = conversor.obtenerDatos(jsonRespuesta, LibrosResponse.class);
+
+            // Verificar si hay resultados
+            if (response.getResults().isEmpty()) {
+                System.out.println("No se encontraron libros con el título: " + titulo);
+                return;
+            }
+
+            // Mostrar los datos de los libros encontrados
+            System.out.println("Libros encontrados:");
+            response.getResults().forEach(libro -> System.out.println("Título: " + libro.libro()));
+
+        } catch (Exception e) {
+            System.out.println("Ocurrió un error al buscar el libro: " + e.getMessage());
+        }
+
+
 
 
 

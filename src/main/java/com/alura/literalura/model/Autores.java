@@ -1,12 +1,21 @@
 package com.alura.literalura.model;
 
+import jakarta.persistence.*;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@Entity
+@Table(name = "autores")
 public class Autores {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id; // Agrega un ID para identificar al autor en la base de datos
+
     private String nombre;
     private int fechaNacimiento;
     private int fechaFallecimiento;
+    @OneToMany(mappedBy = "autores", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Libros> libro = new ArrayList<>();
 
     /*
