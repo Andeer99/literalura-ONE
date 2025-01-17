@@ -2,6 +2,10 @@
 Bienvenido a **Librería Literalura**, proyecto del programa ONE de Oracle + Alura
 
 ## ¿Qué puedes hacer con este proyecto?
+## Configuración de la base de datos
+Para ejecutar esta aplicación, necesitas configurar las siguientes variables de entorno en tu sistema:
+export DataBase_USER=tu_usuario export DataBase_PASSWORD=tu_contraseña export DataBase_HOST=localhost export DataBase_NAME=literalura
+Si estás en Windows, puedes usar el archivo `.env` y una herramienta como `dotenv`.
 
 ### Funcionalidades principales:
 1. **Buscar libros por título:**
