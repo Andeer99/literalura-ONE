@@ -13,7 +13,11 @@ import java.util.Optional;
 public interface AutoresRepository extends JpaRepository<Autores, Integer> {
     @Query("SELECT a FROM Autores a WHERE a.nombre = :nombre")
     Optional<Autores> findAutorByNombre(@Param("nombre") String nombre);
-    @Query("SELECT a FROM Autores a WHERE a.fechaNacimiento <= :anio AND (a.fechaFallecimiento IS NULL OR a.fechaFallecimiento >= :anio)")
-    List<Autores> findAutoresByRangoDeAnios(@Param("anio") int anio);
+
+    @Query("SELECT a FROM Autores a LEFT JOIN FETCH a.libro l WHERE a.fechaNacimiento <= :ano AND (a.fechaFallecimiento IS NULL OR a.fechaFallecimiento >= :ano)")
+    List<Autores> findAutoresVivosEnAnoConLibros(@Param("ano") int ano);
+
+
+
 
 }

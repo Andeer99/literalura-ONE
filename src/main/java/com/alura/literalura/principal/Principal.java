@@ -2,13 +2,17 @@ package com.alura.literalura.principal;
 
 import com.alura.literalura.model.Autores;
 import com.alura.literalura.model.Libros;
+import com.alura.literalura.repository.AutorService;
 import com.alura.literalura.repository.AutoresRepository;
+import com.alura.literalura.repository.LibroService;
 import com.alura.literalura.repository.LibrosRepository;
 import com.alura.literalura.service.ConsumoAPI;
 import com.alura.literalura.service.ConvierteDatos;
 import com.alura.literalura.service.LibrosResponse;
 import jakarta.transaction.Transactional;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.net.URLEncoder;
@@ -39,8 +43,17 @@ public class Principal {
     @Autowired
     private AutoresRepository autoresRepository;
 
+    private final LibroService libroService;
+    private final AutorService autorService;
+    @Autowired
+    public Principal(@Lazy LibroService libroService, @Lazy AutorService autorService) {
+        this.libroService = libroService;
+        this.autorService = autorService;
+    }
 
-    private final String URL_BASE = "https://gutendex.com/";
+
+
+
 
     /**
      * Método principal que muestra el menú y dirige a otras funcionalidades.
@@ -78,12 +91,19 @@ public class Principal {
                     break;
 
                 case 4:
-                    listarAutoresPorRangoDeAños();
+                    listarAutoresVivosEnAno();
                     break;
 
                 case 5:
-                    // Aquí tu lógica para listar libros por idioma
+                    System.out.println("Ingrese el idioma para buscar los libros:");
+                    System.out.println("es - español");
+                    System.out.println("en - inglés");
+                    System.out.println("fr - francés");
+                    System.out.println("pt - portugués");
+                    String idioma = sc.nextLine(); // Asegúrate de tener un scanner inicializado
+                    listarLibrosPorIdioma(idioma);
                     break;
+
 
                 case 0:
                     System.out.println("Cerrando la aplicación...");
@@ -121,6 +141,7 @@ public class Principal {
                     System.out.println("-------------------------------");
                 } else {
                     // Buscar en la API
+                    String URL_BASE = "https://gutendex.com/";
                     String urlBusqueda = URL_BASE + "books/?search=" + URLEncoder.encode(titulo, StandardCharsets.UTF_8);
                     String jsonRespuesta = consumoApi.obtenerDatos(urlBusqueda);
 
@@ -235,47 +256,52 @@ public class Principal {
         });
     }
 
-    private void listarAutoresPorRangoDeAños() {
-        System.out.println("Ingrese el año vivo de autor(es) que desea buscar:");
-        int anio = Integer.parseInt(sc.nextLine().trim());
+    @Transactional
+    protected void listarAutoresVivosEnAno() {
+        System.out.println("Ingrese el año para buscar autores vivos:");
+        int ano = sc.nextInt();
+        sc.nextLine(); // Limpiar buffer
 
         try {
-            // Buscar autores vivos en el año ingresado
-            List<Autores> autores = autoresRepository.findAutoresByRangoDeAnios(anio);
+            // Consulta optimizada con JOIN FETCH
+            List<Autores> autores = autoresRepository.findAutoresVivosEnAnoConLibros(ano);
 
             if (autores.isEmpty()) {
-                System.out.println("No se encontraron autores vivos en el año: " + anio);
-                return;
-            }
-
-            System.out.println("----- AUTORES VIVOS EN EL AÑO " + anio + " -----");
-
-            // Mostrar autores y sus libros
-            autores.forEach(autor -> {
-                System.out.println("-------------------------------");
-                System.out.println("Autor: " + autor.getNombre());
-                System.out.println("Fecha de nacimiento: " + autor.getFechaNacimientoTexto());
-                System.out.println("Fecha de fallecimiento: " + autor.getFechaFallecimientoTexto());
-
-                // Obtener libros del autor
-                List<Libros> librosDelAutor = librosRepository.findLibrosByAutor(autor.getId());
-                if (librosDelAutor.isEmpty()) {
-                    System.out.println("Libros: Ninguno registrado");
-                } else {
+                System.out.println("No se encontraron autores vivos en el año " + ano + ".");
+            } else {
+                System.out.println("----- AUTORES VIVOS EN EL AÑO " + ano + " -----");
+                for (Autores autor : autores) {
+                    System.out.println("-------------------------------");
+                    System.out.println("Autor: " + autor.getNombre());
+                    System.out.println("Fecha de nacimiento: " + autor.getFechaNacimientoTexto());
+                    System.out.println("Fecha de fallecimiento: " + autor.getFechaFallecimientoTexto());
                     System.out.println("Libros:");
-                    librosDelAutor.forEach(libro -> System.out.println("- " + libro.getNombre()));
+                    if (autor.getLibros() != null && !autor.getLibros().isEmpty()) {
+                        autor.getLibros().forEach(libro -> System.out.println("- " + libro.getNombre()));
+                    } else {
+                        System.out.println("- No tiene libros registrados");
+                    }
+                    System.out.println("-------------------------------");
                 }
-            });
-            System.out.println("-------------------------------");
+            }
         } catch (Exception e) {
-            System.out.println("Ocurrió un error al buscar autores: " + e.getMessage());
+            System.out.println("Ocurrió un error al listar autores: " + e.getMessage());
         }
     }
 
-
-
-
-
-
+    private void listarLibrosPorIdioma(String idioma) {
+        List<Libros> libros = libroService.obtenerLibrosPorIdioma(idioma);
+        if (libros.isEmpty()) {
+            System.out.println("No se encontraron libros en el idioma: " + idioma);
+        } else {
+            libros.forEach(libro -> {
+                System.out.println("Título: " + libro.getNombre());
+                System.out.println("Autor: " + libro.getAutores().getNombre());
+                System.out.println("Idioma: " + libro.getLenguaje());
+                System.out.println("Número de descargas: " + libro.getDescargas());
+                System.out.println("--------------------------------");
+            });
+        }
+    }
 
 }

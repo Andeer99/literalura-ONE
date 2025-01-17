@@ -1,6 +1,8 @@
 package com.alura.literalura.model;
 
+import com.alura.literalura.repository.LibroService;
 import jakarta.persistence.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Objects;
@@ -18,10 +20,9 @@ public class Libros {
     private String lenguaje;
     @Column(name = "descargas", nullable = true)
     private Double descargas;
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "autor_id", nullable = true) // Clave foránea que conecta con la tabla "autores"
     private Autores autores;
-
 
     //public Libros(String titulo) {}
 
