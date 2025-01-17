@@ -10,24 +10,13 @@ import java.util.List;
 public class Autores {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id; // Agrega un ID para identificar al autor en la base de datos
+    private Integer id; // Agrega un ID para identificar al autor en la base de datos
 
     private String nombre;
     private int fechaNacimiento;
     private int fechaFallecimiento;
     @OneToMany(mappedBy = "autores", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Libros> libro = new ArrayList<>();
-
-    /*
-    public Autores(){}
-
-    public Autores(String nombre, int fechaNacimiento, int fechaFallecimiento){
-        this.nombre = nombre;
-        this.fechaNacimiento = fechaNacimiento;
-        this.fechaFallecimiento = fechaFallecimiento;
-    }
-
-     */
 
     public int getFechaFallecimiento() {
         return fechaFallecimiento;
