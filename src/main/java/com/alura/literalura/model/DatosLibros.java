@@ -9,5 +9,6 @@ import java.util.List;
 public record DatosLibros(
         @JsonProperty("title") String libro,
         @JsonProperty("authors") List<DatosAutores> autores,
+        @JsonProperty("languages") List<String> lenguaje,
         @JsonProperty("download_count") Double descargas
 ) {}
