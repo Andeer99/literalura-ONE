@@ -22,6 +22,8 @@ public interface LibrosRepository extends JpaRepository<Libros, Integer> {
     List<Libros> findLibrosByAutor(@Param("autorId") Integer autorId);
     @Query("SELECT l FROM Libros l WHERE UPPER(l.lenguaje) = UPPER(:idioma)")
     List<Libros> findLibrosByIdioma(@Param("idioma") String idioma);
+    @Query("SELECT DISTINCT l.lenguaje FROM Libros l WHERE l.lenguaje IS NOT NULL")
+    List<String> findDistinctLenguajes();
 
 
 

@@ -10,7 +10,9 @@ import java.util.List;
 public class LibroService {
     @Autowired
     private LibrosRepository librosRepository;
-
+    public List<String> obtenerLenguajesDisponibles() {
+        return librosRepository.findDistinctLenguajes();
+    }
     public List<Libros> obtenerLibrosPorIdioma(String idioma) {
         return librosRepository.findLibrosByIdioma(idioma);
     }

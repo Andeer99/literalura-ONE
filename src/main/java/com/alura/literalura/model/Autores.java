@@ -48,7 +48,7 @@ public class Autores {
     }
 
     public String getNombre() {
-        return nombre;
+        return nombre != null ? nombre.toString() : "Desconocido";
     }
 
     public void setNombre(String nombre) {

@@ -10,11 +10,9 @@ import com.alura.literalura.service.ConsumoAPI;
 import com.alura.literalura.service.ConvierteDatos;
 import com.alura.literalura.service.LibrosResponse;
 import jakarta.transaction.Transactional;
-import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -28,7 +26,6 @@ import java.util.stream.Collectors;
  */
 @Component
 public class Principal {
-
     private final Scanner sc = new Scanner(System.in);
 
     @Autowired
@@ -42,7 +39,6 @@ public class Principal {
 
     @Autowired
     private AutoresRepository autoresRepository;
-
     private final LibroService libroService;
     private final AutorService autorService;
     @Autowired
@@ -50,14 +46,6 @@ public class Principal {
         this.libroService = libroService;
         this.autorService = autorService;
     }
-
-
-
-
-
-    /**
-     * Método principal que muestra el menú y dirige a otras funcionalidades.
-     */
     public void muestraElMenu() {
         var opcion = -1;
         while (opcion != 0) {
@@ -75,40 +63,29 @@ public class Principal {
             System.out.println(menu);
 
             opcion = sc.nextInt();
-            sc.nextLine(); // Consumimos la línea restante
-
+            sc.nextLine();
             switch (opcion) {
                 case 1:
                     buscarLibroPorTitulo();
                     break;
-
                 case 2:
                     listarLibrosConsultados();
                     break;
-
                 case 3:
                     listarAutoresConsultados();
                     break;
-
                 case 4:
                     listarAutoresVivosEnAno();
                     break;
-
                 case 5:
-                    System.out.println("Ingrese el idioma para buscar los libros:");
-                    System.out.println("es - español");
-                    System.out.println("en - inglés");
-                    System.out.println("fr - francés");
-                    System.out.println("pt - portugués");
-                    String idioma = sc.nextLine(); // Asegúrate de tener un scanner inicializado
+                    listarLenguajesDisponibles();
+                    System.out.println("\nIngresa el idioma para buscar los libros:");
+                    String idioma = sc.nextLine().trim();
                     listarLibrosPorIdioma(idioma);
                     break;
-
-
                 case 0:
                     System.out.println("Cerrando la aplicación...");
                     break;
-
                 default:
                     System.out.println("Opción inválida");
             }
@@ -119,20 +96,15 @@ public class Principal {
         while (true) {
             System.out.println("Ingrese el título del libro: ");
             var titulo = sc.nextLine().trim();
-
             if (titulo.isEmpty()) {
                 System.out.println("El título no puede estar vacío. Por favor, ingresa un título válido.");
-                continue; // Repetimos el ciclo hasta que se introduzca un título válido
+                continue;
             }
-
             try {
-                // Buscar en la base de datos
                 Optional<Libros> libroBD = librosRepository.findByNombreContainingIgnoreCase(titulo)
                         .stream()
                         .findFirst();
-
                 if (libroBD.isPresent()) {
-                    // Mostrar información del libro encontrado en la base de datos
                     System.out.println("----- LIBRO -----");
                     System.out.println("Título: " + libroBD.get().getNombre());
                     System.out.println("Autor: " + libroBD.get().getAutores().getNombre());
@@ -140,16 +112,15 @@ public class Principal {
                     System.out.println("Número de descargas: " + libroBD.get().getDescargas());
                     System.out.println("-------------------------------");
                 } else {
-                    // Buscar en la API
+                    // Busca en la API
                     String URL_BASE = "https://gutendex.com/";
                     String urlBusqueda = URL_BASE + "books/?search=" + URLEncoder.encode(titulo, StandardCharsets.UTF_8);
                     String jsonRespuesta = consumoApi.obtenerDatos(urlBusqueda);
-
                     LibrosResponse response = conversor.obtenerDatos(jsonRespuesta, LibrosResponse.class);
                     response.getResults().stream().findFirst().ifPresent(libro -> {
                         Autores autor = null;
                         if (libro.autores() != null && !libro.autores().isEmpty()) {
-                            // Buscar autor en la base de datos o guardarlo si no existe
+                            // Busca al autor en la base de datos o lo guarda si no existe
                             autor = autoresRepository.findAutorByNombre(libro.autores().get(0).nombre())
                                     .orElseGet(() -> {
                                         Autores nuevoAutor = new Autores();
@@ -159,7 +130,7 @@ public class Principal {
                                         return autoresRepository.save(nuevoAutor); // Guardar el nuevo autor
                                     });
                         }
-                        // Crear y guardar el libro en la base de datos
+                        // Crea y guarda el libro en la base de datos
                         Libros nuevoLibro = new Libros();
                         nuevoLibro.setNombre(libro.libro());
                         nuevoLibro.setLenguaje(String.valueOf(libro.lenguaje()));
@@ -181,8 +152,6 @@ public class Principal {
             } catch (Exception e) {
                 System.out.println("Ocurrió un error al buscar el libro: " + e.getMessage());
             }
-
-            // Preguntar si desea continuar
             String respuesta;
             do {
                 System.out.println("¿Deseas buscar más libros? (si | no)");
@@ -203,7 +172,6 @@ public class Principal {
             System.out.println("No hay libros registrados en la base de datos.");
             return;
         }
-
         System.out.println("----- LISTA DE LIBROS CONSULTADOS -----\n");
         libros.stream()
                 .sorted(Comparator.comparing(Libros::getNombre))
@@ -219,27 +187,19 @@ public class Principal {
 
     @Transactional
     protected void listarAutoresConsultados() {
-        // Consultar todos los libros con sus autores usando el repositorio
         List<Libros> libros = librosRepository.findAllWithAutoresAndLibros();
-
         if (libros.isEmpty()) {
             System.out.println("No hay libros (y por ende autores) registrados en la base de datos.");
             return;
         }
-
-        // Usar un Map para evitar duplicados y agrupar libros por autores
         Map<Autores, List<Libros>> autoresMap = libros.stream()
-                .filter(libro -> libro.getAutores() != null) // Filtrar libros sin autor asignado
+                .filter(libro -> libro.getAutores() != null)
                 .collect(Collectors.groupingBy(Libros::getAutores));
-
         if (autoresMap.isEmpty()) {
             System.out.println("No hay autores registrados en la base de datos.");
             return;
         }
-
         System.out.println("----- LISTA DE AUTORES CONSULTADOS -----\n");
-
-        // Iterar sobre el Map y mostrar la información
         autoresMap.forEach((autor, librosDelAutor) -> {
             System.out.println("-------------------------------");
             System.out.println("Autor: " + autor.getNombre());
@@ -260,12 +220,9 @@ public class Principal {
     protected void listarAutoresVivosEnAno() {
         System.out.println("Ingrese el año para buscar autores vivos:");
         int ano = sc.nextInt();
-        sc.nextLine(); // Limpiar buffer
-
+        sc.nextLine();
         try {
-            // Consulta optimizada con JOIN FETCH
             List<Autores> autores = autoresRepository.findAutoresVivosEnAnoConLibros(ano);
-
             if (autores.isEmpty()) {
                 System.out.println("No se encontraron autores vivos en el año " + ano + ".");
             } else {
@@ -289,12 +246,23 @@ public class Principal {
         }
     }
 
+    private void listarLenguajesDisponibles() {
+        List<String> lenguajes = libroService.obtenerLenguajesDisponibles();
+        if (lenguajes.isEmpty()) {
+            System.out.println("No hay lenguajes registrados en la base de datos.");
+        } else {
+            System.out.println("Los lenguajes disponibles en la BD son:");
+            lenguajes.forEach(System.out::println);
+        }
+    }
+
     private void listarLibrosPorIdioma(String idioma) {
         List<Libros> libros = libroService.obtenerLibrosPorIdioma(idioma);
         if (libros.isEmpty()) {
             System.out.println("No se encontraron libros en el idioma: " + idioma);
         } else {
             libros.forEach(libro -> {
+                System.out.println("--------------------------------");
                 System.out.println("Título: " + libro.getNombre());
                 System.out.println("Autor: " + libro.getAutores().getNombre());
                 System.out.println("Idioma: " + libro.getLenguaje());
